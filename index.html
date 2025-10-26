@@ -3,376 +3,476 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>インタラクティブ旅行プランナー：横浜・鎌倉 2025</title>
+    <title>家庭用蓄電池 徹底比較 | リン酸鉄(LFP) vs 三元系(NMC)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Calm Harmony -->
-    <!-- Application Structure Plan: このSPAは、元の旅のしおりの情報をインタラクティブなダッシュボード形式で再構築します。上部に旅の概要と主要な体験の割合を示すグラフを配置し、ユーザーが一目で旅行の全体像を掴めるようにします。中心的な機能として、日ごとのタブ切り替えナビゲーションを設け、各日の詳細なスケジュール、テーマ、関連情報を動的に表示します。この構造は、長いスクロールを必要とせず、情報を整理して提示することで、特にスマートフォンでの閲覧性と操作性を向上させることを目的としています。静的なテキストを、視覚的で探索可能な体験へと昇華させます。 -->
-    <!-- Visualization & Content Choices: 旅の体験の構成比（横浜、鎌倉、グルメ）を伝えるため、全体像を把握しやすいドーナツチャートを選択しました（Goal: Inform/Compare）。各日のアクティビティのテーマ（例：創造性、スリル）を比較するため、多角的な評価が可能なレーダーチャートを採用（Goal: Compare）。食事の内訳は、カテゴリーごとの割合を示すのに最適な円グラフを使用します（Goal: Compare）。スケジュールは、時系列を直感的に理解できるよう、テーブルではなくHTML/CSSでスタイリングされた縦型タイムラインで表現します（Goal: Organize）。これらの選択はすべて、SVGやMermaid JSを使用せず、Chart.js(Canvas)と構造化HTML/CSSで実現しています。 -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Noto Sans JP', sans-serif;
-            background-color: #f9f9f9;
-            color: #333;
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #f0f4f8;
         }
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 450px;
+            max-width: 600px;
             margin-left: auto;
             margin-right: auto;
             height: 300px;
-            max-height: 350px;
+            max-height: 400px;
         }
         @media (min-width: 768px) {
             .chart-container {
                 height: 350px;
             }
         }
-        .nav-btn {
+        .kpi-card {
+            background-color: #FFFFFF;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
             transition: all 0.3s ease;
         }
-        .nav-btn.active {
-            background-color: #64B5F6;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
-        .timeline {
-            position: relative;
-            padding-left: 30px;
-            border-left: 3px solid #64B5F6;
+        .big-number {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1;
+            color: #3E92CC;
         }
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -9px;
-            top: 8px;
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-            background-color: #64B5F6;
-            border: 2px solid white;
+        .section-title {
+            font-size: 2.25rem;
+            font-weight: 900;
+            color: #0A2463;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .section-intro {
+            font-size: 1.125rem;
+            color: #334155;
+            max-width: 3xl;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .chart-title {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+        .chart-context {
+            font-size: 0.95rem;
+            color: #475569;
+            margin-top: 1.5rem;
+            line-height: 1.7;
+        }
+        .tradeoff-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            background-color: #FFFFFF;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
     </style>
 </head>
-<body class="antialiased">
+<body class="bg-gray-50">
 
-    <div class="container mx-auto p-4 md:p-8 max-w-6xl">
+    <!-- Color Palette: brilliant blues (#0A2463, #3E92CC, #FFF275, #FF5964, #FFFFFF) -->
+    <!-- Narrative Plan: 1. Intro (LFP vs NMC) 2. Safety Comparison 3. Longevity & Cost Comparison 4. Trade-offs (Density/Temp) 5. Market Trends 6. Conclusion -->
+    <!-- Visualization Choices: 
+        - Safety (Heat): Chart.js Bar Chart (Goal: Compare) - NO SVG
+        - Longevity (Cycles): Chart.js Bar Chart (Goal: Compare) - NO SVG
+        - Cost (TCO): HTML/CSS Table (Goal: Organize) - NO SVG
+        - Market Growth: Chart.js Line Chart (Goal: Change) - NO SVG
+        - Market Share (Use Case): Chart.js Doughnut Chart (Goal: Compare) - NO SVG
+        - Trade-offs: HTML/CSS Cards (Goal: Compare) - NO SVG
+    -->
+    <!-- No Mermaid JS was used. No SVG graphics were used. -->
 
-        <header class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-black text-[#64B5F6] mb-3">横浜・鎌倉 夏の思い出旅行</h1>
-            <p class="text-lg md:text-xl font-bold text-gray-600">2025年8月6日（水）～ 8月8日（金）</p>
-        </header>
+    <!-- Header -->
+    <header class="w-full text-white p-8" style="background-color: #0A2463;">
+        <div class="container mx-auto max-w-6xl text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-3">家庭用蓄電池の「新常識」</h1>
+            <p class="text-xl md:text-2xl font-medium" style="color: #FFF275;">リン酸鉄 (LFP) vs 三元系 (NMC) 徹底比較</p>
+        </div>
+    </header>
 
-        <section class="mb-12 bg-white p-6 md:p-8 rounded-2xl shadow-lg">
-            <h2 class="text-2xl md:text-3xl font-bold text-center mb-2 text-gray-800">旅のハイライト</h2>
-            <p class="text-center max-w-3xl mx-auto mb-8 text-gray-600">この3日間の旅は、現代的な横浜の魅力、歴史的な鎌倉の探訪、そして食の楽しみをバランス良く組み合わせたプランです。下のグラフで、旅全体の体験の割合を確認できます。</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+    <!-- Main Content -->
+    <main class="container mx-auto max-w-6xl p-6 md:p-12">
+
+        <!-- Section 1: Introduction -->
+        <section class="mb-16">
+            <p class="section-intro">
+                家庭用蓄電池の導入を検討する際、多くの選択肢が存在します。現在主流のリチウムイオン電池は、主に「リン酸鉄（LFP）」と「三元系（NMC）」に大別されます。どちらも優れた技術ですが、特に「安全性」と「長期的な経済性」において、家庭用としてはLFPが急速に注目を集めています。
+            </p>
+        </section>
+
+        <!-- Section 2: Safety Comparison -->
+        <section class="mb-20">
+            <h2 class="section-title">最重要比較 (1) : 家族を守る「安全性」</h2>
+            <p class="section-intro">
+                蓄電池は長期間、家（屋内または屋外）に設置するものです。最優先すべきは安全性です。LFP電池は、その化学構造の安定性から、熱暴走のリスクが極めて低いという最大のメリットを持っています。
+            </p>
+            <div class="kpi-card">
+                <h3 class="chart-title">熱暴走（発火）に至る温度の比較</h3>
                 <div class="chart-container">
-                    <canvas id="tripHighlightChart"></canvas>
+                    <canvas id="safetyChart"></canvas>
                 </div>
-                <div class="text-center md:text-left">
-                    <div class="space-y-4">
-                        <div class="bg-stone-100 p-4 rounded-lg">
-                            <p class="text-5xl font-black text-[#E57373]">3<span class="text-xl ml-2">日間</span></p>
-                            <p class="mt-1 text-gray-700">横浜と鎌倉を満喫</p>
+                <p class="chart-context">
+                    三元系電池が約220℃で熱分解を開始し発火に至るリスクがあるのに対し、LFP電池の熱分解温度は700℃と圧倒的に高く、非常に安定しています。万が一の外部からの衝撃や内部短絡が発生しても、LFPは熱暴走を起こしにくい構造です。
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 3: Longevity & Cost -->
+        <section class="mb-20">
+            <h2 class="section-title">最重要比較 (2) : 10年後を見据えた「経済性」</h2>
+            <p class="section-intro">
+                高価な買い物だからこそ、長期的な視点が不可欠です。LFP電池は初期コストが同等かやや高い場合もありますが、その圧倒的な長寿命により、トータルコスト（TCO）では三元系を大きく引き離します。
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Longevity Chart -->
+                <div class="kpi-card">
+                    <h3 class="chart-title">充放電サイクル寿命の比較</h3>
+                    <div class="chart-container">
+                        <canvas id="longevityChart"></canvas>
+                    </div>
+                    <p class="chart-context">
+                        LFP電池は6,000回以上の充放電が可能で、これは毎日充放電を繰り返しても15年以上に相当します。一方、三元系は1,000〜2,000回程度が一般的で、LFPの寿命は3〜6倍にもなります。
+                    </p>
+                </div>
+
+                <!-- Cost Structure Table -->
+                <div class="kpi-card">
+                    <h3 class="chart-title">コストと資源の比較</h3>
+                    <div class="flex flex-col h-full justify-center">
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b-2 border-gray-300">
+                                        <th class="p-3 text-sm font-semibold text-gray-700">比較項目</th>
+                                        <th class="p-3 text-sm font-semibold text-center" style="color: #3E92CC;">リン酸鉄 (LFP)</th>
+                                        <th class="p-3 text-sm font-semibold text-center" style="color: #FF5964;">三元系 (NMC)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-200">
+                                        <td class="p-3 font-medium">初期コスト</td>
+                                        <td class="p-3 text-center">中〜高</td>
+                                        <td class="p-3 text-center">中</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200">
+                                        <td class="p-3 font-medium">サイクル寿命</td>
+                                        <td class="p-3 text-center text-lg font-bold" style="color: #3E92CC;">超長 (6,000+)</td>
+                                        <td class="p-3 text-center text-lg font-bold" style="color: #FF5964;">短 (1,000+)</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200">
+                                        <td class="p-3 font-medium">長期TCO</td>
+                                        <td class="p-3 text-center text-lg font-bold" style="color: #3E92CC;">優</td>
+                                        <td class="p-3 text-center text-lg font-bold" style="color: #FF5964;">劣</td>
+                                    </tr>
+                                    <tr class="">
+                                        <td class="p-3 font-medium">主要レアメタル</td>
+                                        <td class="p-3 text-center font-bold">不要</td>
+                                        <td class="p-3 text-center font-bold" style="color: #FF5964;">コバルト, ニッケル</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="bg-stone-100 p-4 rounded-lg">
-                            <p class="text-5xl font-black text-[#64B5F6]">2<span class="text-xl ml-2">都市</span></p>
-                            <p class="mt-1 text-gray-700">新旧の日本の魅力を発見</p>
-                        </div>
-                         <div class="bg-stone-100 p-4 rounded-lg">
-                            <p class="text-5xl font-black text-[#FFD54F]">10+<span class="text-xl ml-2">体験</span></p>
-                            <p class="mt-1 text-gray-700">忘れられない思い出作り</p>
-                        </div>
+                        <p class="chart-context">
+                            LFPは高価なレアメタル（コバルトやニッケル）を使用しないため、資源リスクが低く、将来的な安定供給にも強みがあります。
+                        </p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <nav class="flex justify-center gap-2 md:gap-4 mb-8">
-            <button id="btn-day1" class="nav-btn font-bold py-3 px-6 rounded-full bg-white shadow-md">1日目</button>
-            <button id="btn-day2" class="nav-btn font-bold py-3 px-6 rounded-full bg-white shadow-md">2日目</button>
-            <button id="btn-day3" class="nav-btn font-bold py-3 px-6 rounded-full bg-white shadow-md">3日目</button>
-        </nav>
-
-        <main>
-            <div id="content-day1" class="day-content">
-                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
-                    <h3 class="text-2xl md:text-3xl font-bold text-[#E57373] mb-2">1日目: 横浜みなとみらい探検！</h3>
-                    <p class="text-lg mb-8 text-gray-600">テーマ：最先端の港町で、遊んで、食べて、夜景に感動する一日。</p>
-                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                        <div class="lg:col-span-2">
-                            <h4 class="font-bold text-xl mb-4">タイムライン</h4>
-                            <div class="timeline space-y-6">
-                                <div class="timeline-item"><p><strong class="text-gray-800">14:00</strong> ランチ＠マークイズみなとみらい</p></div>
-                                <div class="timeline-item"><p><strong class="text-gray-800">15:30</strong> カップヌードルミュージアム</p></div>
-                                <div class="timeline-item"><p><strong class="text-gray-800">17:30</strong> 横浜赤レンガ倉庫</p></div>
-                                <div class="timeline-item"><p><strong class="text-gray-800">19:00</strong> ディナー＠横浜ワールドポーターズ</p></div>
-                                <div class="timeline-item"><p><strong class="text-gray-800">20:30</strong> よこはまコスモワールド</p></div>
-                            </div>
-                        </div>
-                        <div class="lg:col-span-3">
-                            <h4 class="font-bold text-xl mb-4 text-center">アクティビティ体験チャート</h4>
-                            <p class="text-center mb-4 text-sm text-gray-500">この日の活動は「創造性」「景観」「楽しさ」に満ちています。特に自分だけのカップヌードル作りは創造性を大いに刺激します。</p>
-                             <div class="chart-container">
-                                <canvas id="day1Chart"></canvas>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Section 4: Trade-offs -->
+        <section class="mb-20">
+            <h2 class="section-title">知っておくべき「トレードオフ」</h2>
+            <p class="section-intro">
+                LFPにも弱点はあります。それは「エネルギー密度の低さ」と「低温性能」です。ただし、これらが家庭用で問題になるかは設置環境によります。
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Density Trade-off -->
+                <div class="tradeoff-card" style="border-top: 5px solid #FF5964;">
+                    <div class="text-6xl mb-4">🔋</div>
+                    <h3 class="chart-title" style="color: #FF5964;">弱点(1): エネルギー密度</h3>
+                    <p class="text-center text-gray-700">
+                        LFPは三元系よりエネルギー密度が低いため、同じ容量（kWh）を貯めるのに、より<span class="font-bold">大きく、重く</span>なります。
+                    </p>
+                    <p class="chart-context">
+                        <span class="font-bold text-gray-800">家庭用での影響：</span> EV（電気自動車）では航続距離に直結する重大な弱点ですが、設置スペースが固定されている家庭用蓄電池では、<span class="font-bold text-gray-800">設置場所が確保できれば大きな問題にはなりません。</span>
+                    </p>
+                </div>
+                <!-- Temperature Trade-off -->
+                <div class="tradeoff-card" style="border-top: 5px solid #FF5964;">
+                    <div class="text-6xl mb-4">❄️</div>
+                    <h3 class="chart-title" style="color: #FF5964;">弱点(2): 低温性能</h3>
+                    <p class="text-center text-gray-700">
+                        LFPは低温（特に氷点下）の環境下でパフォーマンスが低下しやすく、充電や放電の効率が落ちる傾向があります。
+                    </p>
+                    <p class="chart-context">
+                        <span class="font-bold text-gray-800">家庭用での影響：</span> 多くの家庭用蓄電池は屋内や、温度管理された保護筐体に設置されます。極端な寒冷地以外では、<span class="font-bold text-gray-800">この弱点が顕在化するケースは限定的</span>です。
+                    </p>
                 </div>
             </div>
+        </section>
 
-            <div id="content-day2" class="day-content hidden">
-                 <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
-                    <h3 class="text-2xl md:text-3xl font-bold text-[#FFD54F] mb-2">2日目: 古都・鎌倉で歴史とグルメ散策</h3>
-                    <p class="text-lg mb-8 text-gray-600">テーマ：江ノ電に揺られて、歴史と自然に触れる一日。</p>
-                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                        <div class="lg:col-span-2">
-                             <h4 class="font-bold text-xl mb-4">タイムライン</h4>
-                            <div class="timeline space-y-6">
-                                <div class="timeline-item"><p><strong class="text-gray-800">09:30</strong> 銭洗弁天 宇賀福神社 💰</p></div>
-                                <div class="timeline-item"><p><strong class="text-gray-800">11:00</strong> 小町通りで食べ歩きランチ</p></div>
-                                <div class="timeline-item"><p><strong class="text-gray-800">13:30</strong> 鶴岡八幡宮</p></div>
-                                <div class="timeline-item"><p><strong class="text-gray-800">15:00</strong> 長谷寺 & 鎌倉大仏</p></div>
-                                <div class="timeline-item"><p><strong class="text-gray-800">17:00</strong> 鎌倉出発</p></div>
-                            </div>
-                        </div>
-                        <div class="lg:col-span-3">
-                            <h4 class="font-bold text-xl mb-4 text-center">鎌倉グルメ探訪</h4>
-                            <p class="text-center mb-4 text-sm text-gray-500">この日の食事は、伝統的な和食としらす丼、そして小町通りの多彩な食べ歩きスイーツが中心です。</p>
-                             <div class="chart-container">
-                                <canvas id="day2Chart"></canvas>
-                            </div>
-                        </div>
+        <!-- Section 5: Market Trends -->
+        <section class="mb-20">
+            <h2 class="section-title">世界が選ぶ「LFP」：市場の動向</h2>
+            <p class="section-intro">
+                その安全性と経済性から、LFP電池の市場は世界的に急速に拡大しています。EVだけでなく、電力網を支える大規模な定置型蓄電システムでの採用が主流になりつつあります。
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Market Growth Chart -->
+                <div class="kpi-card">
+                    <h3 class="chart-title">LFP電池市場の成長予測 (世界)</h3>
+                    <div class="chart-container">
+                        <canvas id="marketGrowthChart"></canvas>
                     </div>
+                    <p class="chart-context">
+                        世界のLFP電池市場は堅調な成長が見込まれており（年平均成長率 5.7%超の予測も）、安全性とコストを重視する用途での需要が拡大しています。
+                    </p>
+                </div>
+
+                <!-- Use Case Chart -->
+                <div class="kpi-card">
+                    <h3 class="chart-title">LFP電池の主な用途</h3>
+                    <div class="chart-container">
+                        <canvas id="useCaseChart"></canvas>
+                    </div>
+                    <p class="chart-context">
+                        LFPの用途は、コストと安全性が最重視される「自動車（特に商用車や普及価格帯EV）」と「エネルギー貯蔵システム（家庭用・産業用）」が大きな割合を占めています。
+                    </p>
                 </div>
             </div>
+        </section>
 
-            <div id="content-day3" class="day-content hidden">
-                 <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
-                    <h3 class="text-2xl md:text-3xl font-bold text-[#64B5F6] mb-2">3日目: 中華街と港の見える丘</h3>
-                    <p class="text-lg mb-8 text-gray-600">テーマ：食のワンダーランドと、港町の景色を目に焼き付ける一日。</p>
-                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                        <div class="lg:col-span-2">
-                             <h4 class="font-bold text-xl mb-4">タイムライン</h4>
-                            <div class="timeline space-y-6">
-                                <div class="timeline-item"><p><strong class="text-gray-800">10:00</strong> 横浜中華街 散策</p></div>
-                                <div class="timeline-item"><p><strong class="text-gray-800">12:00</strong> ランチ＠横浜中華街</p></div>
-                                <div class="timeline-item"><p><strong class="text-gray-800">14:00</strong> 山下公園</p></div>
-                                <div class="timeline-item"><p><strong class="text-gray-800">15:00</strong> 港の見える丘公園</p></div>
-                                <div class="timeline-item"><p><strong class="text-gray-800">16:30</strong> ホテルで荷物受取</p></div>
-                            </div>
-                        </div>
-                        <div class="lg:col-span-3">
-                           <h4 class="font-bold text-xl mb-4 text-center">中華街・食の探求</h4>
-                           <p class="text-center mb-4 text-sm text-gray-500">最終日のランチは中華街がメイン。本格的な点心から、名物の焼き小籠包まで、様々な中華料理を楽しみます。</p>
-                             <div class="chart-container">
-                                <canvas id="day3Chart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Section 6: Conclusion -->
+        <section class="text-center">
+            <h2 class="section-title">結論：家庭用蓄電池の最適解は？</h2>
+            <div class="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-lg" style="border-top: 8px solid #0A2463;">
+                <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                    家庭用蓄電池選びは、「何を最優先するか」で決まります。
+                </p>
+                <p class="text-xl font-bold text-gray-800 mb-4">
+                    もし、あなたが「設置スペースの制約が少なく」かつ<br>
+                    <span class="text-3xl" style="color: #3E92CC;">「絶対的な安全性」</span>と<span class="text-3xl" style="color: #3E92CC;">「10年以上の長期的な経済性」</span><br>
+                    を最重要視するならば、
+                </p>
+                <p class="text-2xl font-extrabold" style="color: #0A2463;">
+                    リン酸鉄（LFP）蓄電池は、現在最も賢明な選択です。
+                </p>
             </div>
-        </main>
+        </section>
 
-    </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center p-6 mt-12 bg-gray-200 text-gray-600 text-sm">
+        <p>このインフォグラフィックは、公開情報に基づき作成された比較資料です。特定の製品を推奨するものではありません。</p>
+        <p>&copy; 2025 Canvas Infographics. All rights reserved.</p>
+    </footer>
 
     <script>
-        const FONT_COLOR = '#333333';
-        const GRID_COLOR = '#00000020';
-
-        const wrapLabel = (label) => {
-            const maxLength = 16;
-            if (typeof label !== 'string' || label.length <= maxLength) {
-                return label;
-            }
-            const words = label.split(' ');
-            let lines = [];
-            let currentLine = '';
-            for (const word of words) {
-                if ((currentLine + ' ' + word).trim().length > maxLength && currentLine.length > 0) {
-                    lines.push(currentLine);
-                    currentLine = word;
-                } else {
-                    currentLine = (currentLine + ' ' + word).trim();
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            Chart.defaults.font.family = "'Inter', 'Noto Sans JP', sans-serif";
+            Chart.defaults.plugins.tooltip.backgroundColor = '#0A2463';
+            Chart.defaults.plugins.tooltip.titleFont.size = 16;
+            Chart.defaults.plugins.tooltip.bodyFont.size = 14;
+            Chart.defaults.plugins.tooltip.padding = 12;
+            
+            const sharedTooltipTitleCallback = {
+                title: function(tooltipItems) {
+                    const item = tooltipItems[0];
+                    let label = item.chart.data.labels[item.dataIndex];
+                    if (Array.isArray(label)) {
+                        return label.join(' ');
+                    } else {
+                        return label;
+                    }
                 }
-            }
-            if (currentLine.length > 0) {
-                lines.push(currentLine);
-            }
-            return lines;
-        };
-        
-        const tooltipTitleCallback = (tooltipItems) => {
-            const item = tooltipItems[0];
-            let label = item.chart.data.labels[item.dataIndex];
-            return Array.isArray(label) ? label.join(' ') : label;
-        };
+            };
 
-        const SHARED_TOOLTIP_OPTIONS = {
-            plugins: {
-                tooltip: {
-                    callbacks: { title: tooltipTitleCallback }
+            // 1. Safety Chart (Bar)
+            const safetyCtx = document.getElementById('safetyChart').getContext('2d');
+            new Chart(safetyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['三元系 (NMC)', 'リン酸鉄 (LFP)'],
+                    datasets: [{
+                        label: '熱分解（熱暴走）開始温度',
+                        data: [220, 700],
+                        backgroundColor: ['#FF5964', '#3E92CC'],
+                        borderColor: ['#FF5964', '#3E92CC'],
+                        borderWidth: 1
+                    }]
                 },
-                legend: {
-                    labels: { color: FONT_COLOR, font: { size: 14 } }
-                }
-            }
-        };
-
-        const tripHighlightCtx = document.getElementById('tripHighlightChart').getContext('2d');
-        new Chart(tripHighlightCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['モダン横浜体験', '歴史・自然（鎌倉）', 'グルメ体験'],
-                datasets: [{
-                    data: [40, 35, 25],
-                    backgroundColor: ['#E57373', '#FFD54F', '#64B5F6'],
-                    borderColor: '#ffffff',
-                    borderWidth: 5,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                ...SHARED_TOOLTIP_OPTIONS,
-                plugins: {
-                    ...SHARED_TOOLTIP_OPTIONS.plugins,
-                    legend: {
-                        ...SHARED_TOOLTIP_OPTIONS.plugins.legend,
-                        position: 'bottom',
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 800,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' ℃'
+                                }
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: sharedTooltipTitleCallback
+                        }
                     }
-                }
-            }
-        });
-
-        const day1Ctx = document.getElementById('day1Chart').getContext('2d');
-        new Chart(day1Ctx, {
-            type: 'radar',
-            data: {
-                labels: ['創造性', '景観', '楽しさ', 'ロマンチック', 'グルメ'],
-                datasets: [{
-                    label: '1日目の体験',
-                    data: [9, 8, 9, 7, 6],
-                    backgroundColor: 'rgba(229, 115, 115, 0.2)',
-                    borderColor: '#E57373',
-                    pointBackgroundColor: '#E57373',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: '#E57373'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                ...SHARED_TOOLTIP_OPTIONS,
-                scales: {
-                    r: {
-                        angleLines: { color: GRID_COLOR },
-                        grid: { color: GRID_COLOR },
-                        pointLabels: { color: FONT_COLOR, font: { size: 14 } },
-                        ticks: { backdropColor: '#f9f9f9', color: FONT_COLOR }
-                    }
-                }
-            }
-        });
-
-        const day2Ctx = document.getElementById('day2Chart').getContext('2d');
-        new Chart(day2Ctx, {
-            type: 'pie',
-            data: {
-                labels: ['和食・しらす丼', '食べ歩きスイーツ', 'その他'],
-                datasets: [{
-                    data: [45, 40, 15],
-                    backgroundColor: ['#FFD54F', '#E57373', '#64B5F6'],
-                    borderColor: '#ffffff',
-                    borderWidth: 5,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                ...SHARED_TOOLTIP_OPTIONS,
-                 plugins: {
-                    ...SHARED_TOOLTIP_OPTIONS.plugins,
-                    legend: {
-                        ...SHARED_TOOLTIP_OPTIONS.plugins.legend,
-                        position: 'bottom',
-                    }
-                }
-            }
-        });
-
-        const day3Ctx = document.getElementById('day3Chart').getContext('2d');
-        new Chart(day3Ctx, {
-            type: 'pie',
-            data: {
-                labels: ['本格中華（飲茶など）', '食べ歩き（小籠包など）', 'カフェ・その他'],
-                datasets: [{
-                    data: [50, 35, 15],
-                    backgroundColor: ['#64B5F6', '#E57373', '#FFD54F'],
-                    borderColor: '#ffffff',
-                    borderWidth: 5,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                ...SHARED_TOOLTIP_OPTIONS,
-                 plugins: {
-                    ...SHARED_TOOLTIP_OPTIONS.plugins,
-                    legend: {
-                        ...SHARED_TOOLTIP_OPTIONS.plugins.legend,
-                        position: 'bottom',
-                    }
-                }
-            }
-        });
-
-        const dayButtons = [
-            document.getElementById('btn-day1'),
-            document.getElementById('btn-day2'),
-            document.getElementById('btn-day3')
-        ];
-        const dayContents = [
-            document.getElementById('content-day1'),
-            document.getElementById('content-day2'),
-            document.getElementById('content-day3')
-        ];
-
-        function switchDay(dayIndex) {
-            dayButtons.forEach((btn, index) => {
-                if (index === dayIndex) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
                 }
             });
-            dayContents.forEach((content, index) => {
-                if (index === dayIndex) {
-                    content.classList.remove('hidden');
-                } else {
-                    content.classList.add('hidden');
+
+            // 2. Longevity Chart (Bar)
+            const longevityCtx = document.getElementById('longevityChart').getContext('2d');
+            new Chart(longevityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['三元系 (NMC)', 'リン酸鉄 (LFP)'],
+                    datasets: [{
+                        label: 'サイクル寿命（回）',
+                        data: [1500, 6000],
+                        backgroundColor: ['#FF5964', '#3E92CC'],
+                        borderColor: ['#FF5964', '#3E92CC'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 7000,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' 回'
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 14,
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: sharedTooltipTitleCallback
+                        }
+                    }
                 }
             });
-        }
 
-        dayButtons.forEach((btn, index) => {
-            btn.addEventListener('click', () => switchDay(index));
-        });
+            // 3. Market Growth Chart (Line)
+            const marketGrowthCtx = document.getElementById('marketGrowthChart').getContext('2d');
+            new Chart(marketGrowthCtx, {
+                type: 'line',
+                data: {
+                    labels: ['2023', '2024', '2025', '2026', '2027', '2028'],
+                    datasets: [{
+                        label: '市場規模 (予測)',
+                        data: [152, 161, 170, 180, 190, 201],
+                        borderColor: '#3E92CC',
+                        backgroundColor: 'rgba(62, 146, 204, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' 億USD'
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: sharedTooltipTitleCallback
+                        }
+                    }
+                }
+            });
 
-        window.addEventListener('load', () => {
-            switchDay(0);
+            // 4. Use Case Chart (Doughnut)
+            const useCaseCtx = document.getElementById('useCaseChart').getContext('2d');
+            new Chart(useCaseCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['エネルギー貯蔵 (家庭用・産業用)', '自動車 (EV・バス)', '家電・ポータブル電源', 'その他産業用'],
+                    datasets: [{
+                        label: 'LFP用途',
+                        data: [40, 35, 15, 10],
+                        backgroundColor: [
+                            '#3E92CC',
+                            '#0A2463',
+                            '#FF9500',
+                            '#FF5964' 
+                        ],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: sharedTooltipTitleCallback
+                        }
+                    }
+                }
+            });
+
         });
     </script>
-</body>
-</html>
-
 </body>
 </html>
